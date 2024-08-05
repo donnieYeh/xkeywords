@@ -16,11 +16,14 @@
 </head>
 <body>
     <h1>keywords for x</h1>             
+    <p>
+        <a href="https://xding.top/archives/538.html">- 推特搜索小技巧</a>
+    </p>
     <div id="keywords">
         <ul id="keywordList">
             <li><input type="checkbox"> <span>abc</span> <button onclick="deleteKeyword('abc')">Delete</button></li>
-            <li><input type="checkbox"> <span>nsfw</span> <button onclick="deleteKeyword('nsfw')">Delete</button></li>
-            <li><input type="checkbox"> <span>creampie</span> <button onclick="deleteKeyword('creampie')">Delete</button></li>
+            <li><input type="checkbox"> <span>nsfw</span> <button onclick="deleteKeyword('MAGA')">Delete</button></li>
+            <li><input type="checkbox"> <span>creampie</span> <button onclick="deleteKeyword('Olympic')">Delete</button></li>
         </ul>
     </div>
 
@@ -53,8 +56,9 @@
         
         function selectAll() {
             const checkboxes = document.querySelectorAll("#keywords ul li input[type='checkbox']");
+            shouldCheck = !checkboxes[0].checked;
             checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
+                checkbox.checked = shouldCheck;
             });
         }
 
@@ -69,11 +73,19 @@
 
         function doCopy() {
             const kwArr = [];
+            const andList = []
             const kwList = document.querySelectorAll("#keywords ul li input:checked");
             kwList.forEach(kw => {
-                kwArr.push(kw.nextElementSibling.innerText);
+                let kwStr = kw.nextElementSibling.innerText;
+                if (kwStr.toLowerCase().startsWith("and ")){
+                    andList.push(kwStr.substr(4));
+                }else{
+                    kwArr.push(kwStr);
+                }
             });
-            const latestResult = kwArr.join(" OR ");
+            const orResult = kwArr.join(" OR ");
+            const andResult = andList.join(" ");
+            const latestResult = orResult + " " + andResult; 
             copyContent(latestResult);
         }
 
