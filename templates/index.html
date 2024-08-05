@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        li {
+            display: flex;
+            align-items: center;
+        }
+        li button {
+            margin-left: 10px;
+        }
+    </style>
+    <title>keywords for x</title>
+</head>
+<body>
+    <h1>keywords for x</h1>             
+    <div id="keywords">
+        <ul id="keywordList">
+            <li><input type="checkbox"> <span>abc</span> <button onclick="deleteKeyword('abc')">Delete</button></li>
+            <li><input type="checkbox"> <span>nsfw</span> <button onclick="deleteKeyword('nsfw')">Delete</button></li>
+            <li><input type="checkbox"> <span>creampie</span> <button onclick="deleteKeyword('creampie')">Delete</button></li>
+        </ul>
+    </div>
+
+    <div>
+        <button onclick="selectAll()">Select All</button>
+        <input type="text" id="newKeyword" placeholder="Add new keyword">
+        <button onclick="addKeyword()">Add</button>
+        <button onclick="doCopy()">Copy</button>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+                    try {
+                        const response = await fetch('/getKeywords');
+                        if (response.ok) {
+                            const keywords = await response.json();
+                            const ul = document.getElementById('keywordList');
+                            ul.innerHTML = '';  // Clear existing keywords
+                            keywords.forEach(keyword => {
+                                const li = document.createElement('li');
+                                li.innerHTML = `<input type="checkbox"> <span>${keyword}</span> <button onclick="deleteKeyword('${encodeURI(keyword)}')">Delete</button>`;
+                                ul.appendChild(li);
+                            });
+                        } else {
+                            console.error('Failed to fetch keywords');
+                        }
+                    } catch (err) {
+                        console.error('Failed to fetch keywords: ', err);
+                    }
+                });
+        
+        function selectAll() {
+            const checkboxes = document.querySelectorAll("#keywords ul li input[type='checkbox']");
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+
+         async function copyContent(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                console.log('Content copied to clipboard');
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+            }
+        }
+
+        function doCopy() {
+            const kwArr = [];
+            const kwList = document.querySelectorAll("#keywords ul li input:checked");
+            kwList.forEach(kw => {
+                kwArr.push(kw.nextElementSibling.innerText);
+            });
+            const latestResult = kwArr.join(" OR ");
+            copyContent(latestResult);
+        }
+
+        async function addKeyword() {
+            const newKeyword = document.getElementById('newKeyword').value.trim();
+            if (newKeyword) {
+                try {
+                    // 假设后端接口为 /addKeyword
+                    const response = await fetch('/addKeyword', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ keyword: newKeyword })
+                    });
+                    if (response.ok) {
+                        const ul = document.querySelector("#keywords ul");
+                        const li = document.createElement('li');
+                        li.innerHTML = `<input type="checkbox"> <span>${newKeyword}</span> <button onclick="deleteKeyword('${encodeURI(newKeyword)}')">Delete</button>`;
+                        ul.insertBefore(li, ul.firstChild);
+                        document.getElementById('newKeyword').value = '';
+                    } else {
+                        console.error('Failed to add keyword');
+                    }
+                } catch (err) {
+                    console.error('Failed to add keyword: ', err);
+                }
+            }
+        }
+
+        async function deleteKeyword(keyword) {
+            try {
+                // 假设后端接口为 /deleteKeyword
+                const response = await fetch('/deleteKeyword', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ keyword: decodeURI(keyword) })
+                });
+                if (response.ok) {
+                    const li = Array.from(document.querySelectorAll("#keywords ul li"))
+                        .find(li => li.querySelector('span').innerText === decodeURI(keyword));
+                    if (li) li.remove();
+                } else {
+                    console.error('Failed to delete keyword');
+                }
+            } catch (err) {
+                console.error('Failed to delete keyword: ', err);
+            }
+        }
+    </script>
+</body>
+</html>
