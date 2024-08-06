@@ -34,9 +34,10 @@
         <button onclick="doCopy()">Copy</button>
     </div>
     <script>
+        let currentPath = window.location.pathname
         document.addEventListener('DOMContentLoaded', async () => {
                     try {
-                        const response = await fetch('/getKeywords');
+                        const response = await fetch(currentPath+'/getKeywords');
                         if (response.ok) {
                             const keywords = await response.json();
                             const ul = document.getElementById('keywordList');
@@ -94,7 +95,7 @@
             if (newKeyword) {
                 try {
                     // 假设后端接口为 /addKeyword
-                    const response = await fetch('/addKeyword', {
+                    const response = await fetch(currentPath+'/addKeyword', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -119,7 +120,7 @@
         async function deleteKeyword(keyword) {
             try {
                 // 假设后端接口为 /deleteKeyword
-                const response = await fetch('/deleteKeyword', {
+                const response = await fetch(currentPath+'/deleteKeyword', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
