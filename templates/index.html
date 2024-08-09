@@ -34,7 +34,7 @@
         <button onclick="doCopy()">Copy</button>
     </div>
     <script>
-        let currentPath = window.location.pathname
+        let currentPath = window.location.pathname == "/" ? "":window.location.pathname
         document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const response = await fetch(currentPath+'/getKeywords');
@@ -86,7 +86,7 @@
             });
             const orResult = kwArr.join(" OR ");
             const andResult = andList.join(" ");
-            const latestResult = orResult + " " + andResult; 
+            const latestResult = andResult + " (" + orResult + ")"; 
             copyContent(latestResult);
         }
 
