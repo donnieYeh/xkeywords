@@ -1,1 +1,1 @@
-should setup a venv in root path
+should setup a .venv in root path
