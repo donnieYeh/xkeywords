@@ -71,6 +71,56 @@ def delete_keyword():
     return jsonify({"success": False, "error": "Invalid keyword"}), 400
 
 
+# 解析关键词组合的函数
+def parse_keywords(input_string):
+    # 首先将括号内容整体识别，然后将其他部分按空格分割
+    parts = re.findall(r"\(.*?\)|\S+", input_string)
+    keywords = []
+
+    for part in parts:
+        if part.startswith("(") and part.endswith(")"):
+            # 去掉括号，并按 OR 拆解括号内组合
+            inner_keywords = part[1:-1].split(" OR ")
+            keywords.extend(inner_keywords)  # 添加拆解后的关键词
+        else:
+            # 非 OR 集合关键词，添加 "and " 前缀
+            keywords.append("and " + part)
+
+    return keywords
+
+
+# 接收关键词组合并解析
+@app.route("/parse_keywords", methods=["POST"])
+def parse_keywords_api():
+    data = request.get_json()
+    input_string = data.get("keywords", "")
+    parsed_keywords = parse_keywords(input_string)
+    return jsonify(parsed_keywords)
+
+
+# 导入确认后的关键词到数据库
+@app.route("/import_keywords", methods=["POST"])
+def import_keywords():
+    data = request.get_json()
+    keywords = data.get("keywords", [])
+
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    added_keywords = []
+
+    for keyword in keywords:
+        try:
+            cursor.execute("INSERT INTO keywords (keyword) VALUES (?)", (keyword,))
+            added_keywords.append(keyword)
+        except sqlite3.IntegrityError:
+            # 忽略重复关键词
+            continue
+
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "added_keywords": added_keywords}), 200
+
+
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)

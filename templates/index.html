@@ -33,6 +33,20 @@
         <button onclick="addKeyword()">Add</button>
         <button onclick="doCopy()">Copy</button>
     </div>
+    
+
+    <h1>关键词导入</h1>
+    <div>
+        <textarea id="keyword-input" placeholder="粘贴关键词组合"></textarea>
+        <button id="parse-button">解析</button>
+    </div>
+    <div id="parsed-keywords" style="display: none;">
+        <h2>解析的关键词</h2>
+        <button id="select-all-button">全选/反选</button>
+        <ul id="keyword-list"></ul>
+        <button id="import-button">导入</button>
+    </div>
+    
     <script>
         let currentPath = window.location.pathname == "/" ? "":window.location.pathname
         document.addEventListener('DOMContentLoaded', async () => {
@@ -138,6 +152,63 @@
                 console.error('Failed to delete keyword: ', err);
             }
         }
+
+         // 解析关键词
+         document.getElementById('parse-button').addEventListener('click', async () => {
+            const inputString = document.getElementById('keyword-input').value;
+            const response = await fetch('/parse_keywords', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ keywords: inputString })
+            });
+            const parsedKeywords = await response.json();
+
+            const keywordList = document.getElementById('keyword-list');
+            keywordList.innerHTML = '';
+            parsedKeywords.forEach(keyword => {
+                const li = document.createElement('li');
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = keyword;
+                checkbox.checked = true;
+
+                li.appendChild(checkbox);
+                li.appendChild(document.createTextNode(keyword));
+                keywordList.appendChild(li);
+            });
+
+            document.getElementById('parsed-keywords').style.display = 'block';
+        });
+
+        // 全选/反选功能
+        document.getElementById('select-all-button').addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('#keyword-list input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !checkbox.checked;
+            });
+        });
+
+           // 导入关键词
+           document.getElementById('import-button').addEventListener('click', async () => {
+            const selectedKeywords = Array.from(document.querySelectorAll('#keyword-list input[type="checkbox"]:checked'))
+                                          .map(checkbox => checkbox.value);
+            const response = await fetch('/import_keywords', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ keywords: selectedKeywords })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                alert('关键词已成功导入');
+                location.reload();  // 刷新页面
+            }
+        });
     </script>
 </body>
 </html>
