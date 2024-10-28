@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template, Blueprint
+from werkzeug.middleware.proxy_fix import ProxyFix
 import sqlite3
 import os
 import re
@@ -6,8 +7,14 @@ import re
 app = Flask(__name__)
 DATABASE = "keywords.db"
 
+# 添加 ProxyFix 中间件来处理代理头信息
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
 # 创建蓝图
-xkeywords = Blueprint('xkeywords', __name__)
+xkeywords = Blueprint(
+    "xkeywords", __name__, static_folder="static", static_url_path="/static"
+)
+
 
 def init_db():
     if not os.path.exists(DATABASE):
