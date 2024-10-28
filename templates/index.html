@@ -1,33 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        li {
-            display: flex;
-            align-items: center;
-        }
-        li button {
-            margin-left: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">  <!-- 引入静态CSS文件 -->
     <title>keywords for x</title>
 </head>
+
 <body>
     <div id="keyword_operations">
-        <h1>keywords for x</h1>             
+        <h1>keywords for x</h1>
         <p>
             <a href="https://xding.top/archives/538.html">- 推特搜索小技巧</a>
         </p>
-        <div id="keywords">
-            <ul id="keywordList">
-                <li><input type="checkbox"> <span>abc</span> <button onclick="deleteKeyword('abc')">Delete</button></li>
-                <li><input type="checkbox"> <span>MAGA</span> <button onclick="deleteKeyword('MAGA')">Delete</button></li>
-                <li><input type="checkbox"> <span>Olympic</span> <button onclick="deleteKeyword('Olympic')">Delete</button></li>
-            </ul>
-        </div>
+
+        <div class="container">
+            <div id="active-area">
+                <h2>活跃区</h2>
+                <div id="keywords">
+                    <ul id="keywordList">
+                        <li>
+                            <input type="checkbox"> <span>abc</span>
+                            <button onclick="moveToColdStorage('abc')">冷藏</button>
+                            <button onclick="deleteKeyword('abc')">Delete</button>
+                        </li>
+                        <li>
+                            <input type="checkbox"> <span>MAGA</span>
+                            <button onclick="moveToColdStorage('MAGA')">冷藏</button>
+                            <button onclick="deleteKeyword('MAGA')">Delete</button>
+                        </li>
+                        <li>
+                            <input type="checkbox"> <span>Olympic</span>
+                            <button onclick="moveToColdStorage('Olympic')">冷藏</button>
+                            <button onclick="deleteKeyword('Olympic')">Delete</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
     
+            <div id="cold-area">
+                <h2>冷藏区</h2>
+                <div id="cold-storage">
+                    <ul id="coldKeywordList">
+                        <!-- 冷藏关键词项会在这里显示 -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <div>
             <button onclick="selectAll()">Select All</button>
             <input type="text" id="newKeyword" placeholder="Add new keyword">
@@ -49,38 +70,74 @@
             <button id="import-button">导入</button>
         </div>
     </div>
-    
+
     <script>
-        let currentPath = window.location.pathname == "/" ? "":window.location.pathname
+        let currentPath = window.location.pathname === "/" ? "" : window.location.pathname;
+
         document.addEventListener('DOMContentLoaded', async () => {
-                    try {
-                        const response = await fetch(currentPath+'/getKeywords');
-                        if (response.ok) {
-                            const keywords = await response.json();
-                            const ul = document.getElementById('keywordList');
-                            ul.innerHTML = '';  // Clear existing keywords
-                            keywords.forEach(keyword => {
-                                const li = document.createElement('li');
-                                li.innerHTML = `<input type="checkbox"> <span>${keyword}</span> <button onclick="deleteKeyword('${encodeURI(keyword)}')">Delete</button>`;
-                                ul.appendChild(li);
-                            });
+            try {
+                const response = await fetch(currentPath + '/getKeywords');
+                if (response.ok) {
+                    const keywords = await response.json();
+                    const activeList = document.getElementById('keywordList');
+                    const coldList = document.getElementById('coldKeywordList');
+
+                    activeList.innerHTML = '';  // 清空活跃区
+                    coldList.innerHTML = '';    // 清空冷藏区
+
+                    keywords.forEach(keyword => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<input type="checkbox"> <span>${keyword.keyword}</span> `;
+
+                        // 根据状态添加按钮，点击时调用 updateKeywordStatusAndRefresh
+                        if (keyword.status === 'active') {
+                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${keyword.keyword}', 'cold')">冷藏</button>`;
+                            activeList.appendChild(li);
                         } else {
-                            console.error('Failed to fetch keywords');
+                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${keyword.keyword}', 'active')">激活</button>`;
+                            coldList.appendChild(li);
                         }
-                    } catch (err) {
-                        console.error('Failed to fetch keywords: ', err);
-                    }
+
+                        // 公共的删除按钮
+                        li.innerHTML += ` <button onclick="deleteKeyword('${encodeURI(keyword.keyword)}')">Delete</button>`;
+                    });
+                } else {
+                    console.error('Failed to fetch keywords');
+                }
+            } catch (err) {
+                console.error('Failed to fetch keywords:', err);
+            }
+        });
+
+        async function updateKeywordStatusAndRefresh(keyword, status) {
+            try {
+                const response = await fetch(`${currentPath}/update_keyword_status`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ keyword, status })
                 });
-        
+
+                if (response.ok) {
+                    location.reload();  // 请求成功后刷新页面
+                } else {
+                    console.error("Failed to update keyword status");
+                }
+            } catch (error) {
+                console.error("Error updating keyword status:", error);
+            }
+        }
+
         function selectAll() {
-            const checkboxes = document.querySelectorAll("#keywords ul li input[type='checkbox']");
+            const checkboxes = document.querySelectorAll("#active-area ul li input[type='checkbox']");
             shouldCheck = !checkboxes[0].checked;
             checkboxes.forEach(checkbox => {
                 checkbox.checked = shouldCheck;
             });
         }
 
-         async function copyContent(text) {
+        async function copyContent(text) {
             try {
                 await navigator.clipboard.writeText(text);
                 console.log('Content copied to clipboard');
@@ -92,18 +149,18 @@
         function doCopy() {
             const kwArr = [];
             const andList = []
-            const kwList = document.querySelectorAll("#keywords ul li input:checked");
+            const kwList = document.querySelectorAll("#active-area ul li input:checked");
             kwList.forEach(kw => {
                 let kwStr = kw.nextElementSibling.innerText;
-                if (kwStr.toLowerCase().startsWith("and ")){
+                if (kwStr.toLowerCase().startsWith("and ")) {
                     andList.push(kwStr.substr(4));
-                }else{
+                } else {
                     kwArr.push(kwStr);
                 }
             });
             const orResult = kwArr.join(" OR ");
             const andResult = andList.join(" ");
-            const latestResult = andResult + " (" + orResult + ")"; 
+            const latestResult = andResult + " (" + orResult + ")";
             copyContent(latestResult);
         }
 
@@ -112,7 +169,7 @@
             if (newKeyword) {
                 try {
                     // 假设后端接口为 /addKeyword
-                    const response = await fetch(currentPath+'/addKeyword', {
+                    const response = await fetch(currentPath + '/addKeyword', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -120,7 +177,7 @@
                         body: JSON.stringify({ keyword: newKeyword })
                     });
                     if (response.ok) {
-                        const ul = document.querySelector("#keywords ul");
+                        const ul = document.querySelector("#active-area ul");
                         const li = document.createElement('li');
                         li.innerHTML = `<input type="checkbox"> <span>${newKeyword}</span> <button onclick="deleteKeyword('${encodeURI(newKeyword)}')">Delete</button>`;
                         ul.insertBefore(li, ul.firstChild);
@@ -137,7 +194,7 @@
         async function deleteKeyword(keyword) {
             try {
                 // 假设后端接口为 /deleteKeyword
-                const response = await fetch(currentPath+'/deleteKeyword', {
+                const response = await fetch(currentPath + '/deleteKeyword', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -145,7 +202,7 @@
                     body: JSON.stringify({ keyword: decodeURI(keyword) })
                 });
                 if (response.ok) {
-                    const li = Array.from(document.querySelectorAll("#keywords ul li"))
+                    const li = Array.from(document.querySelectorAll("#active-area ul li"))
                         .find(li => li.querySelector('span').innerText === decodeURI(keyword));
                     if (li) li.remove();
                 } else {
@@ -156,10 +213,10 @@
             }
         }
 
-         // 解析关键词
-         document.getElementById('parse-button').addEventListener('click', async () => {
+        // 解析关键词
+        document.getElementById('parse-button').addEventListener('click', async () => {
             const inputString = document.getElementById('keyword-input').value;
-            const response = await fetch(currentPath+'/parse_keywords', {
+            const response = await fetch(currentPath + '/parse_keywords', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -172,7 +229,7 @@
             keywordList.innerHTML = '';
             parsedKeywords.forEach(keyword => {
                 const li = document.createElement('li');
-                
+
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.value = keyword;
@@ -194,11 +251,11 @@
             });
         });
 
-           // 导入关键词
-           document.getElementById('import-button').addEventListener('click', async () => {
+        // 导入关键词
+        document.getElementById('import-button').addEventListener('click', async () => {
             const selectedKeywords = Array.from(document.querySelectorAll('#keyword-list input[type="checkbox"]:checked'))
-                                          .map(checkbox => checkbox.value);
-            const response = await fetch(currentPath+'/import_keywords', {
+                .map(checkbox => checkbox.value);
+            const response = await fetch(currentPath + '/import_keywords', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -214,4 +271,5 @@
         });
     </script>
 </body>
+
 </html>

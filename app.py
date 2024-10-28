@@ -37,9 +37,32 @@ def index():
 @app.route("/getKeywords", methods=["GET"])
 def get_keywords():
     conn = get_db_connection()
-    keywords = conn.execute("SELECT keyword FROM keywords").fetchall()
+    keywords = conn.execute(
+        "SELECT keyword, status FROM keywords"
+    ).fetchall()  # 获取状态字段
     conn.close()
-    return jsonify([row["keyword"] for row in keywords])
+
+    # 返回包含关键词和状态的 JSON 数据
+    return jsonify(
+        [{"keyword": row["keyword"], "status": row["status"]} for row in keywords]
+    )
+
+
+@app.route("/update_keyword_status", methods=["POST"])
+def update_keyword_status():
+    data = request.get_json()
+    keyword = data.get("keyword")
+    status = data.get("status")  # "active" 或 "cold"
+
+    if keyword and status in ["active", "cold"]:
+        conn = get_db_connection()
+        conn.execute(
+            "UPDATE keywords SET status = ? WHERE keyword = ?", (status, keyword)
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True}), 200
+    return jsonify({"success": False, "error": "Invalid keyword or status"}), 400
 
 
 @app.route("/addKeyword", methods=["POST"])

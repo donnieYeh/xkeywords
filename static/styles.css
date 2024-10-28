@@ -1,0 +1,33 @@
+.container {
+    display: flex;
+    gap: 20px;            /* 区域之间的间距 */
+    justify-content: center;
+    padding: 10px;
+}
+
+#active-area, #cold-area {
+    width: 45%;           /* 控制区域宽度，使其并排 */
+    border: 1px solid #ddd;
+    padding: 15px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+h2 {
+    text-align: center;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+li button {
+    margin-left: 10px;
+}
