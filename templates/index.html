@@ -15,36 +15,39 @@
     <title>keywords for x</title>
 </head>
 <body>
-    <h1>keywords for x</h1>             
-    <p>
-        <a href="https://xding.top/archives/538.html">- 推特搜索小技巧</a>
-    </p>
-    <div id="keywords">
-        <ul id="keywordList">
-            <li><input type="checkbox"> <span>abc</span> <button onclick="deleteKeyword('abc')">Delete</button></li>
-            <li><input type="checkbox"> <span>MAGA</span> <button onclick="deleteKeyword('MAGA')">Delete</button></li>
-            <li><input type="checkbox"> <span>Olympic</span> <button onclick="deleteKeyword('Olympic')">Delete</button></li>
-        </ul>
-    </div>
-
-    <div>
-        <button onclick="selectAll()">Select All</button>
-        <input type="text" id="newKeyword" placeholder="Add new keyword">
-        <button onclick="addKeyword()">Add</button>
-        <button onclick="doCopy()">Copy</button>
-    </div>
+    <div id="keyword_operations">
+        <h1>keywords for x</h1>             
+        <p>
+            <a href="https://xding.top/archives/538.html">- 推特搜索小技巧</a>
+        </p>
+        <div id="keywords">
+            <ul id="keywordList">
+                <li><input type="checkbox"> <span>abc</span> <button onclick="deleteKeyword('abc')">Delete</button></li>
+                <li><input type="checkbox"> <span>MAGA</span> <button onclick="deleteKeyword('MAGA')">Delete</button></li>
+                <li><input type="checkbox"> <span>Olympic</span> <button onclick="deleteKeyword('Olympic')">Delete</button></li>
+            </ul>
+        </div>
     
-
-    <h1>关键词导入</h1>
-    <div>
-        <textarea id="keyword-input" placeholder="粘贴关键词组合"></textarea>
-        <button id="parse-button">解析</button>
+        <div>
+            <button onclick="selectAll()">Select All</button>
+            <input type="text" id="newKeyword" placeholder="Add new keyword">
+            <button onclick="addKeyword()">Add</button>
+            <button onclick="doCopy()">Copy</button>
+        </div>
     </div>
-    <div id="parsed-keywords" style="display: none;">
-        <h2>解析的关键词</h2>
-        <button id="select-all-button">全选/反选</button>
-        <ul id="keyword-list"></ul>
-        <button id="import-button">导入</button>
+
+    <div id="keyword_import">
+        <h1>关键词导入</h1>
+        <div>
+            <textarea id="keyword-input" placeholder="粘贴关键词组合"></textarea>
+            <button id="parse-button">解析</button>
+        </div>
+        <div id="parsed-keywords" style="display: none;">
+            <h2>解析的关键词</h2>
+            <button id="select-all-button">全选/反选</button>
+            <ul id="keyword-list"></ul>
+            <button id="import-button">导入</button>
+        </div>
     </div>
     
     <script>

@@ -12,7 +12,7 @@ def init_db():
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
         c.execute(
-            """CREATE TABLE keywords (id INTEGER PRIMARY KEY, keyword TEXT UNIQUE)"""
+            """CREATE TABLE keywords (id INTEGER PRIMARY KEY, keyword TEXT UNIQUE,status TEXT DEFAULT 'active');"""
         )
         conn.commit()
         conn.close()
