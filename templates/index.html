@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">  <!-- 引入静态CSS文件 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> <!-- 引入静态CSS文件 -->
     <title>keywords for x</title>
 </head>
 
@@ -38,7 +38,7 @@
                     </ul>
                 </div>
             </div>
-    
+
             <div id="cold-area">
                 <h2>冷藏区</h2>
                 <div id="cold-storage">
@@ -86,31 +86,34 @@
                     coldList.innerHTML = '';    // 清空冷藏区
 
                     keywords.forEach(keyword => {
+                        const safeKeyword = encodeURIComponent(keyword.keyword);  // 转义关键词
                         const li = document.createElement('li');
                         li.innerHTML = `<input type="checkbox"> <span>${keyword.keyword}</span> `;
 
                         // 根据状态添加按钮，点击时调用 updateKeywordStatusAndRefresh
                         if (keyword.status === 'active') {
-                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${keyword.keyword}', 'cold')">冷藏</button>`;
+                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'cold')">冷藏</button>`;
                             activeList.appendChild(li);
                         } else {
-                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${keyword.keyword}', 'active')">激活</button>`;
+                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'active')">激活</button>`;
                             coldList.appendChild(li);
                         }
 
                         // 公共的删除按钮
-                        li.innerHTML += ` <button onclick="deleteKeyword('${encodeURI(keyword.keyword)}')">Delete</button>`;
+                        li.innerHTML += ` <button onclick="deleteKeyword('${safeKeyword}')">Delete</button>`;
                     });
                 } else {
                     console.error('Failed to fetch keywords');
                 }
             } catch (err) {
-                console.error('Failed to fetch keywords:', err);
+                console.error('Failed to fetch keywords: ', err);
             }
         });
 
+
         async function updateKeywordStatusAndRefresh(keyword, status) {
             try {
+                keyword = decodeURIComponent(keyword)
                 const response = await fetch(`${currentPath}/update_keyword_status`, {
                     method: "POST",
                     headers: {

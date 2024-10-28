@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Blueprint
 import sqlite3
 import os
 import re
@@ -6,6 +6,8 @@ import re
 app = Flask(__name__)
 DATABASE = "keywords.db"
 
+# 创建蓝图
+xkeywords = Blueprint('xkeywords', __name__)
 
 def init_db():
     if not os.path.exists(DATABASE):
@@ -29,12 +31,12 @@ def is_valid_keyword(keyword):
     return re.match(r'^[\w:\-@ ",#]{1,50}$', keyword) is not None
 
 
-@app.route("/")
+@xkeywords.route("/")
 def index():
     return render_template("index.html")
 
 
-@app.route("/getKeywords", methods=["GET"])
+@xkeywords.route("/getKeywords", methods=["GET"])
 def get_keywords():
     conn = get_db_connection()
     keywords = conn.execute(
@@ -48,7 +50,7 @@ def get_keywords():
     )
 
 
-@app.route("/update_keyword_status", methods=["POST"])
+@xkeywords.route("/update_keyword_status", methods=["POST"])
 def update_keyword_status():
     data = request.get_json()
     keyword = data.get("keyword")
@@ -65,7 +67,7 @@ def update_keyword_status():
     return jsonify({"success": False, "error": "Invalid keyword or status"}), 400
 
 
-@app.route("/addKeyword", methods=["POST"])
+@xkeywords.route("/addKeyword", methods=["POST"])
 def add_keyword():
     data = request.get_json()
     keyword = data.get("keyword")
@@ -81,7 +83,7 @@ def add_keyword():
     return jsonify({"success": False, "error": "Invalid keyword"}), 400
 
 
-@app.route("/deleteKeyword", methods=["POST"])
+@xkeywords.route("/deleteKeyword", methods=["POST"])
 def delete_keyword():
     data = request.get_json()
     keyword = data.get("keyword")
@@ -113,7 +115,7 @@ def parse_keywords(input_string):
 
 
 # 接收关键词组合并解析
-@app.route("/parse_keywords", methods=["POST"])
+@xkeywords.route("/parse_keywords", methods=["POST"])
 def parse_keywords_api():
     data = request.get_json()
     input_string = data.get("keywords", "")
@@ -122,7 +124,7 @@ def parse_keywords_api():
 
 
 # 导入确认后的关键词到数据库
-@app.route("/import_keywords", methods=["POST"])
+@xkeywords.route("/import_keywords", methods=["POST"])
 def import_keywords():
     data = request.get_json()
     keywords = data.get("keywords", [])
@@ -146,4 +148,6 @@ def import_keywords():
 
 if __name__ == "__main__":
     init_db()
+    # 注册蓝图，设置url_prefix
+    app.register_blueprint(xkeywords, url_prefix="/xkeywords")
     app.run(debug=True)
