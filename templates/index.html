@@ -202,11 +202,11 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ keyword: decodeURI(keyword) })
+                    body: JSON.stringify({ keyword: decodeURIComponent(keyword) })
                 });
                 if (response.ok) {
-                    const li = Array.from(document.querySelectorAll("#active-area ul li"))
-                        .find(li => li.querySelector('span').innerText === decodeURI(keyword));
+                    const li = Array.from(document.querySelectorAll("#active-area ul li, #cold-area ul li"))
+                        .find(li => li.querySelector('span').innerText === decodeURIComponent(keyword));
                     if (li) li.remove();
                 } else {
                     console.error('Failed to delete keyword');
