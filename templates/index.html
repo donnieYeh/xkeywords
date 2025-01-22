@@ -213,11 +213,18 @@
         }
 
         function doCopy() {
+            const duplicateSet = new Set();
             const kwArr = [];
             const andList = []
             const kwList = document.querySelectorAll("#active-area ul li input:checked");
             kwList.forEach(kw => {
                 let kwStr = kw.nextElementSibling.innerText;
+                if (duplicateSet.has(kwStr)) {
+                    return;
+                }else{
+                    duplicateSet.add(kwStr);
+                }
+                
                 if (kwStr.toLowerCase().startsWith("and ")) {
                     andList.push(kwStr.substr(4));
                 } else {
