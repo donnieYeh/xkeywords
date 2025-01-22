@@ -21,7 +21,12 @@ def init_db():
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
         c.execute(
-            """CREATE TABLE keywords (id INTEGER PRIMARY KEY, keyword TEXT UNIQUE,status TEXT DEFAULT 'active');"""
+            """CREATE TABLE keywords (
+                    id INTEGER PRIMARY KEY,
+                    keyword TEXT UNIQUE,
+                    status TEXT DEFAULT 'active',
+                    tags TEXT
+            );"""
         )
         conn.commit()
         conn.close()
@@ -34,8 +39,8 @@ def get_db_connection():
 
 
 def is_valid_keyword(keyword):
-    # 允许字母、数字、下划线、:, @, ", #，但不允许空格，长度为1到50
-    return re.match(r'^[\w:\-@ ",#]{1,50}$', keyword) is not None
+    # 允许字母、数字、下划线、:, @, ", #, []，但不允许空格，长度为1到50
+    return re.match(r'^[\w:\-@ ",#\[\]]{1,50}$', keyword) is not None
 
 
 @xkeywords.route("/")
@@ -47,13 +52,13 @@ def index():
 def get_keywords():
     conn = get_db_connection()
     keywords = conn.execute(
-        "SELECT keyword, status FROM keywords"
+        "SELECT keyword, status, tags FROM keywords"
     ).fetchall()  # 获取状态字段
     conn.close()
 
     # 返回包含关键词和状态的 JSON 数据
     return jsonify(
-        [{"keyword": row["keyword"], "status": row["status"]} for row in keywords]
+        [{"keyword": row["keyword"], "status": row["status"], "tags": row["tags"]} for row in keywords]
     )
 
 
@@ -79,15 +84,31 @@ def add_keyword():
     data = request.get_json()
     keyword = data.get("keyword")
     if keyword and is_valid_keyword(keyword):
+        plain_keyword, tags = parse_keyword(keyword)
         try:
             conn = get_db_connection()
-            conn.execute("INSERT INTO keywords (keyword) VALUES (?)", (keyword,))
+            conn.execute("INSERT INTO keywords (keyword,tags) VALUES (?,?)", (plain_keyword,tags))
             conn.commit()
             conn.close()
             return jsonify({"success": True}), 200
         except sqlite3.IntegrityError:
             return jsonify({"success": False, "error": "Keyword already exists"}), 400
     return jsonify({"success": False, "error": "Invalid keyword"}), 400
+
+
+# 解析带tags的关键词
+def parse_keyword(keyword):
+    # 正则表达式：匹配格式 "xxx[yyy]" 或者 "xxx"
+    match = re.match(r"([^\[]+)(?:\[(.*)\])?", keyword)
+
+    if match:
+        keyword = match.group(1)  # 提取关键词
+        tags = (
+            match.group(2) if match.group(2) is not None else ""
+        )  # 提取标签，若没有标签则为空字符串
+        return keyword, tags
+    else:
+        return None, ""  # 如果没有匹配到，返回 None 和空字符串
 
 
 @xkeywords.route("/deleteKeyword", methods=["POST"])

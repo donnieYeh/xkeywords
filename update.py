@@ -6,8 +6,8 @@ cursor = conn.cursor()
 
 # 尝试添加新的列
 try:
-    cursor.execute("ALTER TABLE keywords ADD COLUMN status TEXT DEFAULT 'active';")
-    print("Column 'status' added successfully.")
+    cursor.execute("ALTER TABLE keywords ADD COLUMN tags TEXT default ''")
+    print("Column 'tags' added successfully.")
 except sqlite3.OperationalError as e:
     print("Error:", e)
 

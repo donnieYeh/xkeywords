@@ -14,6 +14,11 @@
         <p>
             <a href="https://xding.top/archives/538.html">- 推特搜索小技巧</a>
         </p>
+        <div id="explanation">
+            说明:
+            <p>默认OR条件，AND条件要加 `and` 前缀</p>
+            <p>标签示例：Nasdaq<span style="color:red">[work,daily,news]</span></p>
+        </div>
 
         <div class="container">
             <div id="active-area">
@@ -79,29 +84,11 @@
                 const response = await fetch(currentPath + '/getKeywords');
                 if (response.ok) {
                     const keywords = await response.json();
-                    const activeList = document.getElementById('keywordList');
-                    const coldList = document.getElementById('coldKeywordList');
+                    // 封装tag -> keyword映射关系
+                    var keywordTagMap = mapKeywordToTag(keywords);
 
-                    activeList.innerHTML = '';  // 清空活跃区
-                    coldList.innerHTML = '';    // 清空冷藏区
-
-                    keywords.forEach(keyword => {
-                        const safeKeyword = encodeURIComponent(keyword.keyword);  // 转义关键词
-                        const li = document.createElement('li');
-                        li.innerHTML = `<input type="checkbox"> <span>${keyword.keyword}</span> `;
-
-                        // 根据状态添加按钮，点击时调用 updateKeywordStatusAndRefresh
-                        if (keyword.status === 'active') {
-                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'cold')">冷藏</button>`;
-                            activeList.appendChild(li);
-                        } else {
-                            li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'active')">激活</button>`;
-                            coldList.appendChild(li);
-                        }
-
-                        // 公共的删除按钮
-                        li.innerHTML += ` <button onclick="deleteKeyword('${safeKeyword}')">Delete</button>`;
-                    });
+                    // 遍历tag Map，渲染keyword列表
+                    randerTagKeyword(keywordTagMap)
                 } else {
                     console.error('Failed to fetch keywords');
                 }
@@ -109,6 +96,82 @@
                 console.error('Failed to fetch keywords: ', err);
             }
         });
+
+        function mapKeywordToTag(keywords) {
+            keywordTagMap = { "normal": [] }
+            keywords.forEach(keyword => {
+                if (Boolean(keyword.tags)) {
+                    keyword.tags.split(",").forEach(tag => {
+                        if (!Boolean(keywordTagMap[tag])) {
+                            keywordTagMap[tag] = []
+                        }
+                        keywordTagMap[tag].push(keyword)
+                    })
+                } else {
+                    keywordTagMap["normal"].push(keyword)
+                }
+            });
+            return keywordTagMap;
+        }
+
+        function randerTagKeyword(keywordTagMap) {
+            const activeList = document.getElementById('keywords');
+            const coldList = document.getElementById('cold-storage');
+
+            activeList.innerHTML = '';  // 清空活跃区
+            coldList.innerHTML = '';    // 清空冷藏区
+
+            ['active', 'cold'].forEach(status => {
+                for (let tag in keywordTagMap) {
+                    keywords = keywordTagMap[tag]
+                    // 渲染tag可视化容器
+                    let fieldset = document.createElement("fieldset")
+                    let legend = document.createElement("legend")
+                    legend.innerText = tag
+                    fieldset.appendChild(legend)
+
+                    // 渲染tag框
+                    let tagComponent = document.createElement("ul")
+                    tagComponent.id = `tag-${status}-${tag}`
+                    // 渲染keyword行
+                    keywords.forEach(keyword => {
+                        if (keyword.status === status) {
+                            let keywordComponent = randerKeyword(keyword)
+                            tagComponent.appendChild(keywordComponent)
+                        }
+                    })
+                    if (tagComponent.childElementCount === 0) {
+                        continue
+                    }
+                    // 组合DOM: keyword -> tag -> fieldset -> parentDiv
+                    fieldset.appendChild(tagComponent)
+                    if (status === 'active') {
+                        activeList.appendChild(fieldset)
+                    } else {
+                        coldList.appendChild(fieldset)
+                    }
+                }
+            })
+        }
+
+        function randerKeyword(keyword) {
+            const safeKeyword = encodeURIComponent(keyword.keyword);  // 转义关键词
+            const li = document.createElement('li');
+            li.innerHTML += `<span>  tags:[${keyword.tags}]</span>`
+            li.className = `cls-${safeKeyword}`;
+            li.innerHTML = `<input type="checkbox"> <span>${keyword.keyword}</span>`;
+
+            // 根据状态添加按钮，点击时调用 updateKeywordStatusAndRefresh
+            if (keyword.status === 'active') {
+                li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'cold')">冷藏</button>`;
+            } else {
+                li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'active')">激活</button>`;
+            }
+
+            // 公共的删除按钮
+            li.innerHTML += ` <button onclick="deleteKeyword('${safeKeyword}')">Delete</button>`;
+            return li;
+        }
 
 
         async function updateKeywordStatusAndRefresh(keyword, status) {
