@@ -133,6 +133,10 @@
                     // 渲染tag框
                     let tagComponent = document.createElement("ul")
                     tagComponent.id = `tag-${status}-${tag}`
+
+                    // 渲染tag控制组件
+                    randerTagControlComponent(keywords, tag, status, fieldset)
+
                     // 渲染keyword行
                     keywords.forEach(keyword => {
                         if (keyword.status === status) {
@@ -152,6 +156,68 @@
                     }
                 }
             })
+        }
+
+        function randerTagControlComponent(keywords, tag, status, parentDOM) {
+            // 只有一个keyword时，不需要tagControlComponent
+            if (keywords.length === 1) {
+                return;
+            }
+
+            // 创建和配置复选框
+            let checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = false;
+            checkbox.onchange = function () {
+                console.log(`Selecting elements with selector: #tag-${status}-${tag} li`);
+                let keywordComponents = document.querySelectorAll(`#tag-${status}-${tag} li`);
+                console.log('Found components:', keywordComponents);
+                let isChecked = this.checked;
+                keywordComponents.forEach(keywordComponent => {
+                    keywordComponent.querySelector("input").checked = isChecked;
+                });
+            };
+
+            // 创建删除按钮
+            let deleteButton = document.createElement("button");
+            deleteButton.innerText = "Delete";
+            deleteButton.onclick = function () {
+                deleteTag(tag);
+            };
+
+            // 创建状态变更按钮
+            let changeStatusBtn = document.createElement("button");
+            changeStatusBtn.innerText = (status === 'active') ? "冷藏" : "激活";
+
+            // 创建一个空格作为分隔符
+            let spacer = document.createTextNode(" ");
+
+            // 将所有元素添加到父DOM中
+            parentDOM.appendChild(checkbox);
+            parentDOM.appendChild(changeStatusBtn);
+            parentDOM.appendChild(spacer);  // 使用文本节点代替innerHTML
+            parentDOM.appendChild(deleteButton);
+        }
+
+        // 向后端服务器发送删除关键词tag的请求，成功得到响应后刷新页面
+        async function deleteTag(tag) {
+            try {
+                const response = await fetch(`${currentPath}/deleteTag`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ "tag": tag })
+                });
+
+                if (response.ok) {
+                    location.reload();  // 请求成功后刷新页面
+                } else {
+                    console.error("Failed to deleteTag " + tag);
+                }
+            } catch (error) {
+                console.error("Error deleteTag:", error);
+            }
         }
 
         function randerKeyword(keyword) {
@@ -221,10 +287,10 @@
                 let kwStr = kw.nextElementSibling.innerText;
                 if (duplicateSet.has(kwStr)) {
                     return;
-                }else{
+                } else {
                     duplicateSet.add(kwStr);
                 }
-                
+
                 if (kwStr.toLowerCase().startsWith("and ")) {
                     andList.push(kwStr.substr(4));
                 } else {
