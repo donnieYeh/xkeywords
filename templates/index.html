@@ -215,6 +215,27 @@
             parentDOM.appendChild(changeStatusBtn);
             parentDOM.appendChild(spacer);  // 使用文本节点代替innerHTML
             parentDOM.appendChild(deleteButton);
+            parentDOM.appendChild(spacer);
+            if (tag != "normal") {
+                // 创建永久删除按钮
+                let permanentDeleteButton = document.createElement("button");
+                permanentDeleteButton.innerText = "永久删除";
+                permanentDeleteButton.onclick = function () {
+                    // 获取该标签下的所有 keyword
+                    let keywordArr = [];
+                    document.querySelectorAll(`#tag-${status}-${tag} li`).forEach(keywordComponent => {
+                        const dataKeyword = keywordComponent.getAttribute('data-keyword');
+                        if (dataKeyword) {
+                            keywordArr.push(dataKeyword);
+                        }
+                    });
+
+                    // 调用 deleteKeyword 函数
+                    deleteKeyword(keywordArr, "normal");
+                };
+                parentDOM.appendChild(permanentDeleteButton);
+            }
+
         }
 
         // 向后端服务器发送删除关键词tag的请求，成功得到响应后刷新页面
@@ -253,7 +274,7 @@
             }
 
             // 公共的删除按钮
-            li.innerHTML += ` <button onclick="deleteKeyword('${safeKeyword}','${tag}')">Delete</button>`;
+            li.innerHTML += ` <button onclick="deleteKeyword(['${safeKeyword}'],'${tag}')">Delete</button>`;
             return li;
         }
 
@@ -356,23 +377,23 @@
             }
         }
 
-        async function deleteKeyword(keyword, tag) {
+        async function deleteKeyword(keywords, tag) {
             try {
-                // 假设后端接口为 /deleteKeyword
-                const response = await fetch(currentPath + '/deleteKeyword', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ keyword: decodeURIComponent(keyword), tag: tag })
-                });
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    console.error('Failed to delete keyword');
+                for (const keyword of keywords) {
+                    const response = await fetch(currentPath + '/deleteKeyword', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ keyword: decodeURIComponent(keyword), tag: tag })
+                    });
+                    if (!response.ok) {
+                        console.error('Failed to delete keyword:', keyword);
+                    }
                 }
+                location.reload();  // 所有关键词操作完成后刷新页面
             } catch (err) {
-                console.error('Failed to delete keyword: ', err);
+                console.error('Failed to delete keywords:', err);
             }
         }
 
