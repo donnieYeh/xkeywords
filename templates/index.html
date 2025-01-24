@@ -223,9 +223,8 @@
         function randerKeyword(keyword) {
             const safeKeyword = encodeURIComponent(keyword.keyword);  // 转义关键词
             const li = document.createElement('li');
-            li.innerHTML += `<span>  tags:[${keyword.tags}]</span>`
-            li.className = `cls-${safeKeyword}`;
-            li.innerHTML = `<input type="checkbox"> <span>${keyword.keyword}</span>`;
+            li.className = `cls-${btoa(safeKeyword).replace("=","")}`;  // 使用 Base64 编码作为类名
+            li.innerHTML = `<input type="checkbox" onchange="relateOperate(event, '${li.className}')"> <span>${keyword.keyword}</span>`;
 
             // 根据状态添加按钮，点击时调用 updateKeywordStatusAndRefresh
             if (keyword.status === 'active') {
@@ -237,6 +236,15 @@
             // 公共的删除按钮
             li.innerHTML += ` <button onclick="deleteKeyword('${safeKeyword}')">Delete</button>`;
             return li;
+        }
+
+        // 针对所有className的li组件下的checkbox，把其状态关联成ischecked
+        function relateOperate(event, className) {
+            const isChecked = event.target.checked;
+            document.querySelectorAll(`.${className} input[type="checkbox"]`).forEach(function (checkbox) {
+                checkbox.checked = isChecked;
+            });
+
         }
 
 
