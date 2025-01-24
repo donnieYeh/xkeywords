@@ -194,6 +194,32 @@ def import_keywords():
     conn.close()
     return jsonify({"success": True, "added_keywords": added_keywords}), 200
 
+@xkeywords.route("/deleteTag", methods=["POST"])
+def delete_tag():
+    data = request.get_json()
+    tag = data.get("tag")
+
+    if not tag:
+        return jsonify({"success": False, "error": "Tag is required"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.execute("SELECT keyword, tags FROM keywords")
+
+    for row in cursor:
+        keyword = row["keyword"]
+        tags = row["tags"]
+        if tags:
+            tagArr = tags.split(",")
+            if tag in tagArr:
+                tagArr.remove(tag)
+                new_tags = ",".join(tagArr)
+                conn.execute(
+                    "UPDATE keywords SET tags = ? WHERE keyword = ?", (new_tags, keyword)
+                )
+
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True}), 200
 
 if __name__ == "__main__":
     init_db()
