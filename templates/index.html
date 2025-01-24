@@ -140,7 +140,7 @@
                     // 渲染keyword行
                     keywords.forEach(keyword => {
                         if (keyword.status === status) {
-                            let keywordComponent = randerKeyword(keyword)
+                            let keywordComponent = randerKeyword(keyword, tag)
                             tagComponent.appendChild(keywordComponent)
                         }
                     })
@@ -220,10 +220,10 @@
             }
         }
 
-        function randerKeyword(keyword) {
+        function randerKeyword(keyword, tag) {
             const safeKeyword = encodeURIComponent(keyword.keyword);  // 转义关键词
             const li = document.createElement('li');
-            li.className = `cls-${btoa(safeKeyword).replace("=","")}`;  // 使用 Base64 编码作为类名
+            li.className = `cls-${btoa(safeKeyword).replace("=", "")}`;  // 使用 Base64 编码作为类名
             li.innerHTML = `<input type="checkbox" onchange="relateOperate(event, '${li.className}')"> <span>${keyword.keyword}</span>`;
 
             // 根据状态添加按钮，点击时调用 updateKeywordStatusAndRefresh
@@ -234,7 +234,7 @@
             }
 
             // 公共的删除按钮
-            li.innerHTML += ` <button onclick="deleteKeyword('${safeKeyword}')">Delete</button>`;
+            li.innerHTML += ` <button onclick="deleteKeyword('${safeKeyword}','${tag}')">Delete</button>`;
             return li;
         }
 
@@ -324,11 +324,7 @@
                         body: JSON.stringify({ keyword: newKeyword })
                     });
                     if (response.ok) {
-                        const ul = document.querySelector("#active-area ul");
-                        const li = document.createElement('li');
-                        li.innerHTML = `<input type="checkbox"> <span>${newKeyword}</span> <button onclick="deleteKeyword('${encodeURI(newKeyword)}')">Delete</button>`;
-                        ul.insertBefore(li, ul.firstChild);
-                        document.getElementById('newKeyword').value = '';
+                        location.reload();
                     } else {
                         console.error('Failed to add keyword');
                     }
@@ -338,7 +334,7 @@
             }
         }
 
-        async function deleteKeyword(keyword) {
+        async function deleteKeyword(keyword, tag) {
             try {
                 // 假设后端接口为 /deleteKeyword
                 const response = await fetch(currentPath + '/deleteKeyword', {
@@ -346,12 +342,10 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ keyword: decodeURIComponent(keyword) })
+                    body: JSON.stringify({ keyword: decodeURIComponent(keyword), tag: tag })
                 });
                 if (response.ok) {
-                    const li = Array.from(document.querySelectorAll("#active-area ul li, #cold-area ul li"))
-                        .find(li => li.querySelector('span').innerText === decodeURIComponent(keyword));
-                    if (li) li.remove();
+                    location.reload();
                 } else {
                     console.error('Failed to delete keyword');
                 }

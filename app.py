@@ -58,7 +58,10 @@ def get_keywords():
 
     # 返回包含关键词和状态的 JSON 数据
     return jsonify(
-        [{"keyword": row["keyword"], "status": row["status"], "tags": row["tags"]} for row in keywords]
+        [
+            {"keyword": row["keyword"], "status": row["status"], "tags": row["tags"]}
+            for row in keywords
+        ]
     )
 
 
@@ -87,7 +90,10 @@ def add_keyword():
         plain_keyword, tags = parse_keyword(keyword)
         try:
             conn = get_db_connection()
-            conn.execute("INSERT INTO keywords (keyword,tags) VALUES (?,?)", (plain_keyword,tags))
+            conn.execute(
+                "INSERT INTO keywords (keyword,tags) VALUES (?,?)",
+                (plain_keyword, tags),
+            )
             conn.commit()
             conn.close()
             return jsonify({"success": True}), 200
@@ -115,9 +121,24 @@ def parse_keyword(keyword):
 def delete_keyword():
     data = request.get_json()
     keyword = data.get("keyword")
+    tag = data.get("tag")
+
     if keyword and is_valid_keyword(keyword):
         conn = get_db_connection()
-        conn.execute("DELETE FROM keywords WHERE keyword = ?", (keyword,))
+        if tag != "normal":
+            cursor = conn.execute(
+                "select * from keywords where keyword = ?", (keyword,)
+            )
+            for row in cursor:
+                tags = row["tags"]
+                tagArr = tags.split(",")
+                tagArr.remove(tag)
+                conn.execute(
+                    "UPDATE keywords SET tags = ? WHERE keyword = ?",
+                    (",".join(tagArr), keyword),
+                )
+        else:
+            conn.execute("DELETE FROM keywords WHERE keyword = ?", (keyword,))
         conn.commit()
         conn.close()
         return jsonify({"success": True}), 200
