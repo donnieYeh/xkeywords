@@ -188,6 +188,24 @@
             // 创建状态变更按钮
             let changeStatusBtn = document.createElement("button");
             changeStatusBtn.innerText = (status === 'active') ? "冷藏" : "激活";
+            changeStatusBtn.onclick = function () {
+                console.log(`Selecting elements with selector: #tag-${status}-${tag} li`);
+                let keywordComponents = document.querySelectorAll(`#tag-${status}-${tag} li`);
+                console.log('Found components:', keywordComponents);
+                // 获取所有 li 元素中的 data-keyword 属性值
+                let keywordArr = [];
+                keywordComponents.forEach(keywordComponent => {
+                    const dataKeyword = keywordComponent.getAttribute('data-keyword');
+                    if (dataKeyword) {
+                        keywordArr.push(dataKeyword);
+                    }
+                });
+
+                // 调用 updateKeywordStatusAndRefresh
+                if (keywordArr.length > 0) {
+                    updateKeywordStatusAndRefresh(keywordArr, status === 'active' ? 'cold' : 'active');
+                }
+            };
 
             // 创建一个空格作为分隔符
             let spacer = document.createTextNode(" ");
@@ -224,13 +242,14 @@
             const safeKeyword = encodeURIComponent(keyword.keyword);  // 转义关键词
             const li = document.createElement('li');
             li.className = `cls-${btoa(safeKeyword).replace("=", "")}`;  // 使用 Base64 编码作为类名
+            li.setAttribute("data-keyword", safeKeyword);
             li.innerHTML = `<input type="checkbox" onchange="relateOperate(event, '${li.className}')"> <span>${keyword.keyword}</span>`;
 
             // 根据状态添加按钮，点击时调用 updateKeywordStatusAndRefresh
             if (keyword.status === 'active') {
-                li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'cold')">冷藏</button>`;
+                li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh(['${safeKeyword}'], 'cold')">冷藏</button>`;
             } else {
-                li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh('${safeKeyword}', 'active')">激活</button>`;
+                li.innerHTML += `<button onclick="updateKeywordStatusAndRefresh(['${safeKeyword}'], 'active')">激活</button>`;
             }
 
             // 公共的删除按钮
@@ -248,22 +267,25 @@
         }
 
 
-        async function updateKeywordStatusAndRefresh(keyword, status) {
+        async function updateKeywordStatusAndRefresh(keywords, status) {
             try {
-                keyword = decodeURIComponent(keyword)
-                const response = await fetch(`${currentPath}/update_keyword_status`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ keyword, status })
-                });
+                keywords = keywords.map(keyword => decodeURIComponent(keyword));
+                for (const keyword of keywords) {
+                    const response = await fetch(`${currentPath}/update_keyword_status`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ keyword, status })
+                    });
 
-                if (response.ok) {
-                    location.reload();  // 请求成功后刷新页面
-                } else {
-                    console.error("Failed to update keyword status");
+                    if (response.ok) {
+                        console.log("Keyword status updated successfully")
+                    } else {
+                        console.error("Failed to update keyword status");
+                    }
                 }
+                location.reload();
             } catch (error) {
                 console.error("Error updating keyword status:", error);
             }
