@@ -650,7 +650,7 @@ export function renderHomePage(options: HomePageOptions): string {
         keywords: [],
         grouped: { active: [], cold: [] },
         parsedKeywords: [],
-        selectedActive: new Set(),
+        selectedKeywords: new Set(),
       };
 
       const els = {
@@ -734,7 +734,7 @@ export function renderHomePage(options: HomePageOptions): string {
       }
 
       function buildCopyOutput() {
-        const selectedRecords = state.keywords.filter((row) => row.status === "active" && state.selectedActive.has(row.keyword));
+        const selectedRecords = state.keywords.filter((row) => row.status === "active" && state.selectedKeywords.has(row.keyword));
         if (selectedRecords.length === 0) {
           els.copyOutput.textContent = "勾选活跃区关键词后，这里会生成最终搜索表达式。";
           return;
@@ -762,13 +762,12 @@ export function renderHomePage(options: HomePageOptions): string {
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.checked = state.selectedActive.has(record.keyword);
-        checkbox.disabled = status !== "active";
+        checkbox.checked = state.selectedKeywords.has(record.keyword);
         checkbox.addEventListener("change", () => {
           if (checkbox.checked) {
-            state.selectedActive.add(record.keyword);
+            state.selectedKeywords.add(record.keyword);
           } else {
-            state.selectedActive.delete(record.keyword);
+            state.selectedKeywords.delete(record.keyword);
           }
           buildCopyOutput();
         });
@@ -811,7 +810,7 @@ export function renderHomePage(options: HomePageOptions): string {
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ keyword: record.keyword, tag }),
           });
-          state.selectedActive.delete(record.keyword);
+          state.selectedKeywords.delete(record.keyword);
           showToast(tag === "normal" ? "关键词已删除" : "标签已移除");
           await refresh();
         });
@@ -835,6 +834,23 @@ export function renderHomePage(options: HomePageOptions): string {
         const controls = document.createElement("div");
         controls.className = "chip-row";
 
+        const selectionButton = document.createElement("button");
+        selectionButton.className = "soft-button tiny-button";
+        selectionButton.textContent = group.keywords.every((row) => state.selectedKeywords.has(row.keyword))
+          ? "反选"
+          : "全选";
+        selectionButton.addEventListener("click", () => {
+          const shouldSelectAll = group.keywords.some((row) => !state.selectedKeywords.has(row.keyword));
+          for (const row of group.keywords) {
+            if (shouldSelectAll) {
+              state.selectedKeywords.add(row.keyword);
+            } else {
+              state.selectedKeywords.delete(row.keyword);
+            }
+          }
+          render();
+        });
+
         const toggleButton = document.createElement("button");
         toggleButton.className = "soft-button tiny-button";
         toggleButton.textContent = status === "active" ? "整组冷藏" : "整组激活";
@@ -851,7 +867,7 @@ export function renderHomePage(options: HomePageOptions): string {
           await refresh();
         });
 
-        controls.append(toggleButton);
+        controls.append(selectionButton, toggleButton);
 
         if (group.tag !== "normal") {
           const deleteTagButton = document.createElement("button");
@@ -965,11 +981,14 @@ export function renderHomePage(options: HomePageOptions): string {
 
       function toggleActiveSelection() {
         const activeKeywords = state.keywords.filter((row) => row.status === "active").map((row) => row.keyword);
-        const shouldSelectAll = activeKeywords.some((keyword) => !state.selectedActive.has(keyword));
-        state.selectedActive.clear();
+        const shouldSelectAll = activeKeywords.some((keyword) => !state.selectedKeywords.has(keyword));
         if (shouldSelectAll) {
           for (const keyword of activeKeywords) {
-            state.selectedActive.add(keyword);
+            state.selectedKeywords.add(keyword);
+          }
+        } else {
+          for (const keyword of activeKeywords) {
+            state.selectedKeywords.delete(keyword);
           }
         }
         render();
