@@ -1,2 +1,6 @@
-keywords.db
-.venv/
+/target
+/pkg
+/node_modules
+/.wrangler/
+*.log
+*.db

@@ -1,0 +1,18 @@
+[package]
+name = "xkeywords-rust"
+version = "0.1.0"
+edition = "2021"
+description = "Rust/WASM port of xkeywords for Cloudflare Workers"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+js-sys = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+wasm-bindgen = "0.2"
+
+[dev-dependencies]
+serde_json = "1"

@@ -1,0 +1,15 @@
+{
+  "name": "xkeywords-rust-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build:wasm": "wasm-pack build --target web --out-dir pkg",
+    "build:worker": "npm run build:wasm && wrangler deploy --dry-run",
+    "dev:worker": "npm run build:wasm && wrangler dev"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260405.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.11.1"
+  }
+}
