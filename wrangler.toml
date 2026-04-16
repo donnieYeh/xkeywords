@@ -4,3 +4,13 @@ compatibility_date = "2026-04-15"
 
 [[kv_namespaces]]
 binding = "XKEYWORDS_STATE"
+
+[build]
+# 安装 Rust 和 wasm-pack，然后构建 WebAssembly
+command = """
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  source $HOME/.cargo/env
+  curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+  npm install
+  npm run build:wasm
+"""
